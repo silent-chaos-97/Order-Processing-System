@@ -43,6 +43,7 @@ class OrderServiceTest {
         orderService = new OrderService(orderRepository, orderMapper);
     }
 
+    // Builds a sample PENDING order with one item, for reuse across tests
     private Order pendingOrder() {
         Order order = Order.builder()
                 .id(UUID.randomUUID())
@@ -63,6 +64,7 @@ class OrderServiceTest {
         return order;
     }
 
+    // Creating an order should persist it as PENDING with the total computed from its items
     @Test
     void createOrder_savesOrderWithComputedTotal() {
         CreateOrderRequest request = new CreateOrderRequest(
@@ -87,6 +89,7 @@ class OrderServiceTest {
         assertThat(captor.getValue().getItems()).allMatch(item -> item.getOrder() == captor.getValue());
     }
 
+    // getOrder should return the matching order when it exists
     @Test
     void getOrder_returnsOrder_whenFound() {
         Order order = pendingOrder();
@@ -98,6 +101,7 @@ class OrderServiceTest {
         assertThat(response.customerName()).isEqualTo("Jane Doe");
     }
 
+    // getOrder should throw ResourceNotFoundException when the id doesn't exist
     @Test
     void getOrder_throwsNotFound_whenMissing() {
         UUID id = UUID.randomUUID();
@@ -107,6 +111,7 @@ class OrderServiceTest {
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
+    // When a status filter is given, only matching orders should be queried/returned
     @Test
     void listOrders_filtersByStatus_whenProvided() {
         Order order = pendingOrder();
@@ -119,6 +124,7 @@ class OrderServiceTest {
         verify(orderRepository, never()).findAll();
     }
 
+    // With no status filter, all orders should be returned
     @Test
     void listOrders_returnsAll_whenNoFilter() {
         when(orderRepository.findAll()).thenReturn(List.of(pendingOrder(), pendingOrder()));
@@ -129,6 +135,7 @@ class OrderServiceTest {
         verify(orderRepository).findAll();
     }
 
+    // PENDING -> PROCESSING is allowed and should update the order's status
     @Test
     void updateStatus_allowsValidTransition() {
         Order order = pendingOrder();
@@ -140,6 +147,7 @@ class OrderServiceTest {
         assertThat(response.status()).isEqualTo(OrderStatus.PROCESSING);
     }
 
+    // PENDING -> DELIVERED is not an allowed transition and should be rejected
     @Test
     void updateStatus_rejectsInvalidTransition() {
         Order order = pendingOrder();
@@ -151,6 +159,7 @@ class OrderServiceTest {
         verify(orderRepository, never()).save(any());
     }
 
+    // A PENDING order can be cancelled, ending up CANCELLED
     @Test
     void cancelOrder_succeeds_whenPending() {
         Order order = pendingOrder();
@@ -162,6 +171,7 @@ class OrderServiceTest {
         assertThat(response.status()).isEqualTo(OrderStatus.CANCELLED);
     }
 
+    // An order that has moved past PENDING can no longer be cancelled
     @Test
     void cancelOrder_rejected_whenNotPending() {
         Order order = pendingOrder();
@@ -174,6 +184,7 @@ class OrderServiceTest {
         verify(orderRepository, never()).save(any());
     }
 
+    // The scheduled job's underlying logic should promote every PENDING order to PROCESSING
     @Test
     void processPendingOrders_promotesAllPendingOrdersToProcessing() {
         Order first = pendingOrder();

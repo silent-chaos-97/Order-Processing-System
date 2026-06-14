@@ -15,6 +15,7 @@ class OrderStatusSchedulerTest {
     @Mock
     private OrderService orderService;
 
+    // The scheduled job should simply delegate to OrderService
     @Test
     void promotePendingOrders_delegatesToOrderService() {
         when(orderService.processPendingOrders()).thenReturn(3);

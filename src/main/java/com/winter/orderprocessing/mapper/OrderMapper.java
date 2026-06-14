@@ -8,9 +8,11 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+// Converts between entity classes and their API response DTOs
 @Component
 public class OrderMapper {
 
+    // Maps an order and its items to the API response shape
     public OrderResponse toResponse(Order order) {
         List<OrderItemResponse> itemResponses = order.getItems().stream()
                 .map(this::toItemResponse)
@@ -28,6 +30,7 @@ public class OrderMapper {
         );
     }
 
+    // Maps a single order item to its response shape, including the computed subtotal
     public OrderItemResponse toItemResponse(OrderItem item) {
         return new OrderItemResponse(
                 item.getId(),

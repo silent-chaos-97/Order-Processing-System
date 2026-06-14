@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotEmpty;
 
 import java.util.List;
 
+// Payload for creating a new order
 public record CreateOrderRequest(
 
         @NotBlank(message = "Customer name is required")

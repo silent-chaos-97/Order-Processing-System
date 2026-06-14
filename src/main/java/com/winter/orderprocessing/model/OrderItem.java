@@ -10,6 +10,7 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+// A single product line within an order
 @Entity
 @Table(name = "order_items")
 @Getter
@@ -36,6 +37,7 @@ public class OrderItem {
     @Column(name = "unit_price", nullable = false)
     private BigDecimal unitPrice;
 
+    // Line subtotal: unit price multiplied by quantity
     public BigDecimal getSubtotal() {
         return unitPrice.multiply(BigDecimal.valueOf(quantity));
     }

@@ -22,11 +22,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+// Core business logic for creating, retrieving and transitioning orders
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class OrderService {
 
+    // Defines which status changes are permitted from each current status
     private static final Map<OrderStatus, Set<OrderStatus>> ALLOWED_TRANSITIONS = new EnumMap<>(OrderStatus.class);
 
     static {
@@ -40,6 +42,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
 
+    // Builds and persists a new order with its line items and computed total
     public OrderResponse createOrder(CreateOrderRequest request) {
         Order order = Order.builder()
                 .customerName(request.customerName())
@@ -61,11 +64,13 @@ public class OrderService {
         return orderMapper.toResponse(saved);
     }
 
+    // Looks up a single order by id, throwing if not found
     @Transactional(readOnly = true)
     public OrderResponse getOrder(UUID orderId) {
         return orderMapper.toResponse(findOrderOrThrow(orderId));
     }
 
+    // Lists orders, optionally filtered to a single status
     @Transactional(readOnly = true)
     public List<OrderResponse> listOrders(OrderStatus statusFilter) {
         List<Order> orders = statusFilter != null
@@ -77,12 +82,14 @@ public class OrderService {
                 .toList();
     }
 
+    // Moves an order to a new status if the transition is allowed
     public OrderResponse updateStatus(UUID orderId, OrderStatus newStatus) {
         Order order = findOrderOrThrow(orderId);
         transitionStatus(order, newStatus);
         return orderMapper.toResponse(orderRepository.save(order));
     }
 
+    // Cancels an order, only allowed while it is still PENDING
     public OrderResponse cancelOrder(UUID orderId) {
         Order order = findOrderOrThrow(orderId);
         if (order.getStatus() != OrderStatus.PENDING) {
@@ -107,6 +114,7 @@ public class OrderService {
         return pendingOrders.size();
     }
 
+    // Applies a status change after checking it against ALLOWED_TRANSITIONS
     private void transitionStatus(Order order, OrderStatus newStatus) {
         Set<OrderStatus> allowed = ALLOWED_TRANSITIONS.get(order.getStatus());
         if (!allowed.contains(newStatus)) {
@@ -117,6 +125,7 @@ public class OrderService {
         order.setUpdatedAt(Instant.now());
     }
 
+    // Fetches an order by id or throws ResourceNotFoundException
     private Order findOrderOrThrow(UUID orderId) {
         return orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));

@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+// An order placed by a customer, with its line items and current status
 @Entity
 @Table(name = "orders")
 @Getter
@@ -53,11 +54,13 @@ public class Order {
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
 
+    // Adds an item to this order and links it back to the order
     public void addItem(OrderItem item) {
         item.setOrder(this);
         items.add(item);
     }
 
+    // Recomputes the order total from the current items
     public void recalculateTotal() {
         this.totalAmount = items.stream()
                 .map(OrderItem::getSubtotal)

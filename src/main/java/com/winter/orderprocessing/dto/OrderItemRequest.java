@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 
+// A single line item within a create-order request
 public record OrderItemRequest(
 
         @NotBlank(message = "Product name is required")
